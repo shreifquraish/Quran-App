@@ -15,9 +15,8 @@
 </p>
 
 <p align="center">
-  <a href="#-تحميل-التطبيق">📲 تحميل</a> •
-  <a href="#-قائمة-القراء-المشايخ">🎧 القراء</a> •
-  <a href="#-مميزات-التطبيق">✨ المميزات</a> •
+  <a href="https://www.mediafire.com/file/pvjih40arlls1ro/%25D8%25A7%25D9%2584%25D9%2582%25D8%25B1%25D8%25A3%25D9%2586_%25D8%25A7%25D9%2584%25D9%2583%25D8%25B1%25D9%258A%25D9%2585.apk/file">📲 تحميل مباشر (APK)</a> •
+  <a href="https://shreeif-quraish.netlify.app/">🌐 الموقع الرسمي</a> •
   <a href="docs/PRIVACY_POLICY.md">🔒 سياسة الخصوصية</a>
 </p>
 
@@ -25,11 +24,14 @@
 
 ## 📱 تحميل التطبيق
 
-<a href="https://shreeif-quraish.netlify.app/">
-  <img src="https://img.shields.io/badge/Download-APK-black?style=for-the-badge&logo=android" alt="Download APK">
+<a href="https://www.mediafire.com/file/pvjih40arlls1ro/%25D8%25A7%25D9%2584%25D9%2582%25D8%25B1%25D8%25A3%25D9%2586_%25D8%25A7%25D9%2584%25D9%2583%25D8%25B1%25D9%258A%25D9%2585.apk/file">
+  <img src="https://img.shields.io/badge/📲_تحميل_APK-MediaFire-orange?style=for-the-badge&logo=mediafire" alt="Download APK from MediaFire">
 </a>
 
-🔗 **الرابط الرسمي:** [https://shreeif-quraish.netlify.app/](https://shreeif-quraish.netlify.app/)
+🔗 **رابط التحميل المباشر:**  
+[https://www.mediafire.com/file/pvjih40arlls1ro/القرآن_الكريم.apk/file](https://www.mediafire.com/file/pvjih40arlls1ro/%25D8%25A7%25D9%2584%25D9%2582%25D8%25B1%25D8%25A3%25D9%2586_%25D8%25A7%25D9%2584%25D9%2583%25D8%25B1%25D9%258A%25D9%2585.apk/file)
+
+🌐 **الموقع الرسمي (معلومات إضافية):** [https://shreeif-quraish.netlify.app/](https://shreeif-quraish.netlify.app/)
 
 > ⚠️ **ملاحظة مهمة:** في أول مرة تشغيل للتطبيق، **يحتاج اتصال بالإنترنت** لتحميل البيانات الأساسية. بعد ذلك يمكنك استخدام معظم الميزات بدون إنترنت.
 
@@ -113,7 +115,7 @@
 
 | المتطلب | التفصيل |
 |---------|---------|
-| نظام التشغيل | Android 10.0 (Lollipop) أو أحدث |
+| نظام التشغيل | Android 5.0 (Lollipop) أو أحدث |
 | المساحة | 50 MB + مساحة إضافية حسب تحميلاتك |
 | الإنترنت | **مطلوب في أول مرة فقط** لتحميل البيانات الأساسية |
 | البث المباشر | يحتاج إنترنت أثناء الاستماع فقط |
@@ -145,9 +147,28 @@ Shreif Quraish
 
 ## 📥 تعليمات التثبيت
 
-1. قم بتحميل ملف APK من الرابط أعلاه
-2. افتح الملف على هاتفك android
+1. قم بتحميل ملف APK من الرابط أعلاه (MediaFire)
+2. افتح الملف على هاتفك Android
 3. اسمح بتثبيت التطبيقات من مصادر خارجية إذا طُلب منك ذلك
 4. اتبع التعليمات لإكمال التثبيت
 5. افتح التطبيق – **تأكد من وجود اتصال بالإنترنت لأول مرة فقط**
 
+
+---
+
+## 🙏 شكر وتقدير
+
+الحمد لله الذي بنعمته تتم الصالحات.  
+نسأل الله أن ينفع بهذا التطبيق عباده، وأن يجعله خالصاً لوجهه الكريم.
+
+---
+
+<p align="center">
+  <b>🕌 قال الله تعالى: "إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ"</b><br>
+  سورة الحجر – الآية 9
+</p>
+
+<p align="center">
+  <sub>© 2026 Shreif Quraish – جميع الحقوق محفوظة</sub><br>
+  <sub>تطوعي خالص، لا يدعم الإعلانات أو جمع البيانات</sub>
+</p>
