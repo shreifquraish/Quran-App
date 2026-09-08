@@ -90,14 +90,13 @@
 ## 📞 تواصل مع المطور
 
 <div align="center">
-
-[![الهاتف](https://img.shields.io/badge/📱_الهاتف-01556313513-green?style=for-the-badge)](tel:01556313513)
-[![تحميل التطبيق](https://img.shields.io/badge/📲_تحميل_التطبيق-انقر_هنا-blue?style=for-the-badge)](https://link.gettap.co/shreif_engineer)
-[![فيسبوك](https://img.shields.io/badge/فيسبوك-1877F2?style=for-the-badge&logo=facebook&logoColor=white)](https://www.facebook.com/ShreifEngineer/)
-[![لينكد إن](https://img.shields.io/badge/لينكد_إن-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/shreif-quraish)
-[![إنستجرام](https://img.shields.io/badge/إنستجرام-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/shreif.quraish)
-[![تيك توك](https://img.shields.io/badge/تيك_توك-000000?style=for-the-badge&logo=tiktok&logoColor=white)](https://www.tiktok.com/@shreifengineer)
-[![الموقع الرسمي](https://img.shields.io/badge/🌐_الموقع_الرسمي-انقر_هنا-ff6b6b?style=for-the-badge)](https://shreif-quraish.vercel.app/)
+  
+[![Behance](https://img.shields.io/badge/Behance-1769FF?style=for-the-badge&logo=behance&logoColor=white)](https://www.behance.net/)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/)
+[![Portfolio](https://img.shields.io/badge/Portfolio-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://shreif-quraish.vercel.app/)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/shreif-quraish)
+[![Facebook](https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white)](https://www.facebook.com/ShreifEngineer/)
+[![WhatsApp](https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/201556313513)
 
 </div>
 
@@ -106,8 +105,3 @@
 <p align="center">
   🤲 <strong>اللهم اجعل هذا العمل خالصًا لوجهك، ونافعًا لعبادك</strong> 🤲
 </p>
-<p align="center">
-  🤲 <strong>اللهم اجعل هذا العمل خالصًا لوجهك، ونافعًا لعبادك</strong> 🤲
-</p>
-
-</div>
