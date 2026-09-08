@@ -87,18 +87,25 @@
 
 ---
 
-## 📞 تواصل معنا
+## 📞 تواصل مع المطور
 
-- 📱 الهاتف: 01556313513
-- 🌐 تحميل التطبيق: [https://link.gettap.co/shreif_engineer](https://link.gettap.co/shreif_engineer)
-- 📘 فيسبوك: [ShreifEngineer](https://www.facebook.com/ShreifEngineer/)
-- 💼 لينكد إن: [Shreif Quraish](https://www.linkedin.com/in/shreif-quraish)
-- 📸 إنستجرام: [shreif.quraish](https://www.instagram.com/shreif.quraish)
-- 🎵 تيك توك: [@shreifengineer](https://www.tiktok.com/@shreifengineer)
-- 🌍 الموقع الرسمي: [shreif-quraish.vercel.app](https://shreif-quraish.vercel.app/)
+<div align="center">
+
+[![الهاتف](https://img.shields.io/badge/📱_الهاتف-01556313513-green?style=for-the-badge)](tel:01556313513)
+[![تحميل التطبيق](https://img.shields.io/badge/📲_تحميل_التطبيق-انقر_هنا-blue?style=for-the-badge)](https://link.gettap.co/shreif_engineer)
+[![فيسبوك](https://img.shields.io/badge/فيسبوك-1877F2?style=for-the-badge&logo=facebook&logoColor=white)](https://www.facebook.com/ShreifEngineer/)
+[![لينكد إن](https://img.shields.io/badge/لينكد_إن-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/shreif-quraish)
+[![إنستجرام](https://img.shields.io/badge/إنستجرام-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/shreif.quraish)
+[![تيك توك](https://img.shields.io/badge/تيك_توك-000000?style=for-the-badge&logo=tiktok&logoColor=white)](https://www.tiktok.com/@shreifengineer)
+[![الموقع الرسمي](https://img.shields.io/badge/🌐_الموقع_الرسمي-انقر_هنا-ff6b6b?style=for-the-badge)](https://shreif-quraish.vercel.app/)
+
+</div>
 
 ---
 
+<p align="center">
+  🤲 <strong>اللهم اجعل هذا العمل خالصًا لوجهك، ونافعًا لعبادك</strong> 🤲
+</p>
 <p align="center">
   🤲 <strong>اللهم اجعل هذا العمل خالصًا لوجهك، ونافعًا لعبادك</strong> 🤲
 </p>
