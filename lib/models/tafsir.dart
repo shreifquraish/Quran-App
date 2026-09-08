@@ -12,24 +12,9 @@ class TafsirEdition {
 
 const availableTafsirEditions = [
   TafsirEdition(
-    slug: 'ar-tafsir-muyassar',
-    name: 'التفسير الميسر',
-    author: 'نخبة من العلماء',
-  ),
-  TafsirEdition(
-    slug: 'ar-tafsir-as-saadi',
-    name: 'تفسير السعدي',
-    author: 'الشيخ عبد الرحمن السعدي',
-  ),
-  TafsirEdition(
-    slug: 'ar-tafsir-al-jalalayn',
-    name: 'تفسير الجلالين',
-    author: 'جلال الدين المحلي والسيوطي',
-  ),
-  TafsirEdition(
-    slug: 'ar-tafseer-al-qurtubi',
-    name: 'تفسير القرطبي',
-    author: 'الإمام القرطبي',
+    slug: 'ar-tafsir-ibn-kathir',
+    name: 'تفسير ابن كثير',
+    author: 'الإمام ابن كثير',
   ),
 ];
 

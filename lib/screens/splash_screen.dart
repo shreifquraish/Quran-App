@@ -70,36 +70,7 @@ class SplashScreen extends StatelessWidget {
                     ).animate().fadeIn(delay: 200.ms),
                     const SizedBox(height: 8),
                     const SizedBox(height: 40),
-                    if (error != null) ...[
-                      const Icon(
-                        Icons.cloud_off_rounded,
-                        color: AppColors.accentSoft,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'تعذر الاتصال بالانترنت. يرجى التأكد من اتصالك.',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                      FilledButton.icon(
-                        onPressed: onRetry,
-                        icon: const Icon(Icons.refresh_rounded),
-                        label: const Text('إعادة المحاولة'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.accent,
-                          foregroundColor: AppColors.textDark,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 14,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      ),
-                    ] else if (showProgress) ...[
+                    if (showProgress) ...[
                       CircularPercentIndicator(
                         radius: 80,
                         lineWidth: 10,

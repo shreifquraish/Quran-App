@@ -13,6 +13,10 @@ import 'bookmarks_screen.dart';
 import 'search_screen.dart';
 import 'settings_screen.dart';
 import 'splash_screen.dart';
+import 'prayer_times_screen.dart';
+// Tasmee feature removed
+import '../services/update_service.dart';
+
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -24,10 +28,20 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      UpdateService.checkForUpdates(context);
+      // Removed microphone permission prompt as requested
+    });
+  }
+
   final _pages = const [
     ReadScreen(),
     TafsirScreen(),
     ListenScreen(),
+    PrayerTimesScreen(),
     RadiosScreen(),
     SettingsScreen(),
   ];
@@ -36,7 +50,8 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final app = context.watch<AppProvider>();
 
-    if (app.isLoading) {
+    // Only show splash screen if quran is not ready
+    if (!app.quranReady) {
       return SplashScreen(
         progress: app.setupProgress,
         message: app.setupMessage,
@@ -83,6 +98,11 @@ class _MainShellState extends State<MainShell> {
               label: 'الاستماع',
             ),
             NavigationDestination(
+              icon: Icon(Icons.access_time_outlined),
+              selectedIcon: Icon(Icons.access_time_rounded),
+              label: 'الصلاة',
+            ),
+            NavigationDestination(
               icon: Icon(Icons.radio_outlined),
               selectedIcon: Icon(Icons.radio_rounded),
               label: 'الإذاعة',
@@ -111,9 +131,11 @@ class _Header extends StatelessWidget {
       case 1:
         return 'تفسير السور';
       case 2:
-        return 'استماع التلاوات';
-      case 3:
         return 'إذاعة القرآن';
+      case 3:
+        return 'أوقات الصلاة';
+      case 4:
+        return 'استماع التلاوات';
       default:
         return 'الإعدادات';
     }
@@ -121,19 +143,34 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final app = context.watch<AppProvider>();
+    final dark = app.isDarkMode;
+    
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(14),
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.accent,
+                  AppColors.accent.withOpacity(0.8),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.accent.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: const Icon(Icons.mosque_rounded, color: AppColors.accent),
+            child: const Icon(Icons.mosque_rounded, color: Colors.white, size: 24),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,31 +179,63 @@ class _Header extends StatelessWidget {
                   AppConstants.appName,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: AppColors.accent,
-                        letterSpacing: 0.5,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
                       ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   _title,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
               ],
             ),
           ),
-          if (index == 0) ...[
-            IconButton(
-              tooltip: 'بحث',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SearchScreen()),
+                if (index == 0) ...[
+            Container(
+              decoration: BoxDecoration(
+                color: dark ? AppColors.card.withOpacity(0.8) : Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              icon: const Icon(Icons.search_rounded, color: AppColors.accent),
-            ),
-            IconButton(
-              tooltip: 'العلامات المرجعية',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const BookmarksScreen()),
+              child: IconButton(
+                tooltip: 'بحث',
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SearchScreen()),
+                ),
+                icon: const Icon(Icons.search_rounded, color: AppColors.accent),
               ),
-              icon: const Icon(Icons.bookmark_rounded, color: AppColors.accent),
             ),
+            const SizedBox(width: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: dark ? AppColors.card.withOpacity(0.8) : Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                tooltip: 'العلامات المرجعية',
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const BookmarksScreen()),
+                ),
+                icon: const Icon(Icons.bookmark_rounded, color: AppColors.accent),
+              ),
+            ),
+            // Removed duplicate search icon per user request
           ],
         ],
       ),

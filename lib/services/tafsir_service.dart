@@ -74,7 +74,7 @@ class TafsirService {
         surahId: surahId,
         surahName: surahName,
         edition: availableTafsirEditions.firstWhere(
-            (e) => e.slug == 'ar-tafsir-al-jalalayn',
+            (e) => e.slug == 'ar-tafsir-ibn-kathir',
             orElse: () => edition),
         fullText: fullText,
         infoSections: const [],
@@ -90,8 +90,8 @@ class TafsirService {
     return const [
       TafsirBook(
         id: 1,
-        name: 'تفسير الجلالين',
-        author: 'جلال الدين المحلي والسيوطي',
+        name: 'تفسير ابن كثير',
+        author: 'الإمام ابن كثير',
       ),
     ];
   }
@@ -123,8 +123,8 @@ class TafsirService {
       if (text.isEmpty) return null;
 
       return TafsirContent(
-        bookName: 'تفسير الجلالين',
-        author: 'جلال الدين المحلي والسيوطي',
+        bookName: 'تفسير ابن كثير',
+        author: 'الإمام ابن كثير',
         text: text,
       );
     } catch (_) {

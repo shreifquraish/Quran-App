@@ -6,6 +6,7 @@ import '../core/theme.dart';
 import '../providers/app_provider.dart';
 import '../utils/quran_format.dart';
 import 'mushaf_reader_screen.dart';
+// Tasmee feature removed
 
 class ReadScreen extends StatefulWidget {
   const ReadScreen({super.key});
@@ -47,10 +48,11 @@ class _ReadScreenState extends State<ReadScreen> {
     final app = context.watch<AppProvider>();
     final dark = app.isDarkMode;
     final showContinue = _lastReadPage != null;
+    final extraHeaderCount = (showContinue ? 1 : 0);
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-      itemCount: app.surahs.length + (showContinue ? 1 : 0),
+      itemCount: app.surahs.length + extraHeaderCount,
       itemBuilder: (context, index) {
         if (showContinue && index == 0) {
           return Padding(
@@ -79,7 +81,9 @@ class _ReadScreenState extends State<ReadScreen> {
           );
         }
 
-        final surah = app.surahs[showContinue ? index - 1 : index];
+        // Tasmee hero card removed
+
+        final surah = app.surahs[index - extraHeaderCount];
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -102,8 +106,22 @@ class _ReadScreenState extends State<ReadScreen> {
               subtitle: Text(
                 '${surah.ayahs} آية • ${surah.isMakkah ? 'مكية' : 'مدنية'}',
               ),
-              trailing:
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.play_circle_fill_rounded,
+                      color: AppColors.accent,
+                      size: 22,
+                    ),
+                    tooltip: 'تشغيل التلاوة',
+                    onPressed: () => _openMushaf(page: getPageNumber(surah.id, 1), surahId: surah.id),
+                  ),
+                  const SizedBox(width: 2),
                   const Icon(Icons.menu_book_rounded, color: AppColors.accent),
+                ],
+              ),
               onTap: () => _openMushaf(
                 page: getPageNumber(surah.id, 1),
                 surahId: surah.id,

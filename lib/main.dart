@@ -6,9 +6,14 @@ import 'core/constants.dart';
 import 'core/theme.dart';
 import 'providers/app_provider.dart';
 import 'screens/main_shell.dart';
+import 'services/permission_service.dart';
+import 'services/salawat_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final permissionService = PermissionService();
+  permissionService.initialize();
+  await SalawatService.instance.initialize();
   runApp(const QuranApp());
 }
 
@@ -38,12 +43,21 @@ class QuranApp extends StatelessWidget {
               GlobalCupertinoLocalizations.delegate,
             ],
             theme: AppTheme.light(),
-            darkTheme: AppTheme.light(), // Enforce light mode
-            themeMode: ThemeMode.light,
-            home: const MainShell(),
+            darkTheme: AppTheme.dark(),
+            themeMode: app.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: const PermissionWrapper(),
           );
         },
       ),
     );
+  }
+}
+
+class PermissionWrapper extends StatelessWidget {
+  const PermissionWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MainShell();
   }
 }

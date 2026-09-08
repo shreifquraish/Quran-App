@@ -92,6 +92,76 @@ class MiniPlayer extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              if (!player.isRadio)
+                StreamBuilder<Duration>(
+                  stream: player.player.positionStream,
+                  builder: (context, posSnapshot) {
+                    final position = posSnapshot.data ?? Duration.zero;
+                    return StreamBuilder<Duration?>(
+                      stream: player.player.durationStream,
+                      builder: (context, durSnapshot) {
+                        final duration = durSnapshot.data ?? Duration.zero;
+                        double max = duration.inMilliseconds.toDouble();
+                        double val = position.inMilliseconds.toDouble();
+                        if (val > max) max = val;
+                        
+                        String formatDuration(Duration d) {
+                          String twoDigits(int n) => n.toString().padLeft(2, '0');
+                          String twoDigitMinutes = twoDigits(d.inMinutes.remainder(60));
+                          String twoDigitSeconds = twoDigits(d.inSeconds.remainder(60));
+                          if (d.inHours > 0) {
+                            return '${d.inHours}:$twoDigitMinutes:$twoDigitSeconds';
+                          }
+                          return '$twoDigitMinutes:$twoDigitSeconds';
+                        }
+
+                        return Column(
+                          children: [
+                            SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                trackHeight: 4,
+                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                                overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+                                activeTrackColor: AppColors.accent,
+                                inactiveTrackColor: AppColors.accent.withOpacity(0.2),
+                                thumbColor: AppColors.accent,
+                              ),
+                              child: Slider(
+                                min: 0,
+                                max: max > 0 ? max : 1.0,
+                                value: val > 0 ? val : 0.0,
+                                onChanged: (v) {
+                                  player.seek(Duration(milliseconds: v.toInt()));
+                                },
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    formatDuration(position),
+                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  Text(
+                                    formatDuration(duration),
+                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                    );
+                  }
+                ),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

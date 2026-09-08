@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
-  static const primaryDark = Color(0xFF0A2E24);
+  static const primaryDark = Color(0xFF0D3D2E);
   static const primary = Color(0xFF1B5E4B);
-  static const primaryLight = Color(0xFF2E7D62);
-  static const accent = Color(0xFFD4AF37);
-  static const accentSoft = Color(0xFFE8C872);
-  static const surfaceDark = Color(0xFF0F1F1A);
-  static const surface = Color(0xFF152821);
-  static const card = Color(0xFF1E3A32);
+  static const primaryLight = Color(0xFF3D8B6E);
+  static const accent = Color(0xFFE5C158);
+  static const accentSoft = Color(0xFFEDD68A);
+  static const surfaceDark = Color(0xFF0A1F18);
+  static const surface = Color(0xFF122822);
+  static const card = Color(0xFF1A3D34);
   static const cardLight = Color(0xFFF5F0E6);
-  static const textPrimary = Color(0xFFF5F0E6);
-  static const textSecondary = Color(0xFFB8C9C0);
+  static const textPrimary = Color(0xFFF7F5EE);
+  static const textSecondary = Color(0xFFC5D6CD);
   static const textDark = Color(0xFF1A2E28);
 }
 

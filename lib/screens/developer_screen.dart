@@ -79,7 +79,7 @@ class DeveloperScreen extends StatelessWidget {
                       _ContactGridButton(
                         icon: FontAwesomeIcons.globe,
                         color: const Color.fromARGB(255, 255, 170, 0),
-                        onTap: () => _launchUrl('https://shreeif-quraish.netlify.app/'),
+                        onTap: () => _launchUrl('https://link.gettap.co/shreif_engineer'),
                       ),
                     ],
                   ),

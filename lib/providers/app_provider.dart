@@ -13,6 +13,7 @@ import '../services/audio_player_service.dart';
 import '../services/audio_service.dart';
 import '../services/tafsir_service.dart';
 import '../services/quran_service.dart' show DatabaseHelper, QuranService;
+import '../services/prayer_times_service.dart';
 
 class AppProvider extends ChangeNotifier {
   AppProvider() {
@@ -25,6 +26,7 @@ class AppProvider extends ChangeNotifier {
   late final AudioDownloadService downloadService = AudioDownloadService(db);
   late final AudioPlayerService playerService = AudioPlayerService();
   late final RadioService radioService = RadioService();
+  late final PrayerTimesService prayerTimesService = PrayerTimesService();
 
   bool isDarkMode = false;
   bool isLoading = true;
@@ -38,11 +40,11 @@ class AppProvider extends ChangeNotifier {
 
   List<Surah> surahs = [];
   List<TafsirEdition> availableTafsirEditions = [
-    TafsirEdition(name: 'الميسر', author: 'نخبة من العلماء', slug: 'ar-tafsir-al-muyassar'),
-    TafsirEdition(name: 'الجلالين', author: 'المحلي والسيوطي', slug: 'ar-tafsir-al-jalalayn'),
-    TafsirEdition(name: 'السعدي', author: 'عبد الرحمن السعدي', slug: 'ar-tafseer-al-saddi'),
-    TafsirEdition(name: 'ابن كثير', author: 'ابن كثير', slug: 'ar-tafsir-ibn-kathir'),
-    TafsirEdition(name: 'الطبري', author: 'الطبري', slug: 'ar-tafseer-al-qurtubi'),
+    const TafsirEdition(name: 'الميسر', author: 'نخبة من العلماء', slug: 'ar-tafsir-al-muyassar'),
+    const TafsirEdition(name: 'الجلالين', author: 'المحلي والسيوطي', slug: 'ar-tafsir-al-jalalayn'),
+    const TafsirEdition(name: 'السعدي', author: 'عبد الرحمن السعدي', slug: 'ar-tafseer-al-saddi'),
+    const TafsirEdition(name: 'ابن كثير', author: 'ابن كثير', slug: 'ar-tafsir-ibn-kathir'),
+    const TafsirEdition(name: 'الطبري', author: 'الطبري', slug: 'ar-tafseer-al-qurtubi'),
   ];
   String tafsirEditionSlug = 'ar-tafsir-al-muyassar';
   List<RadioStation> radios = [];
@@ -52,22 +54,34 @@ class AppProvider extends ChangeNotifier {
       isDarkMode = prefs.getBool('dark_mode') ?? false;
       tafsirEditionSlug = prefs.getString('tafsir_edition') ?? availableTafsirEditions.first.slug;
       isFirstLaunch = !(prefs.getBool('first_run_complete') ?? false);
-      showProgress = isFirstLaunch;
+      showProgress = false; // Don't show progress
       isLoading = true;
+
       notifyListeners();
+
+      // Initialize services in background (non-blocking)
+      try {
+        await prayerTimesService.initialize();
+      } catch (e) {
+        debugPrint('Prayer times service error: $e');
+      }
 
       _continueBootstrap(isFirstLaunch: isFirstLaunch);
     } catch (e, stack) {
       debugPrint('Bootstrap error: $e\n$stack');
-      setupError = e.toString();
+      // Don't set error, just continue
+      isLoading = false;
       notifyListeners();
+      _continueBootstrap(isFirstLaunch: false);
     }
   }
 
   Future<void> _continueBootstrap({required bool isFirstLaunch}) async {
     try {
+      // Load surahs from local assets (always works offline)
       final raw = await rootBundle.loadString('assets/data/surahs.json');
       surahs = (jsonDecode(raw) as List<dynamic>).map((x) => Surah.fromJson(x)).toList();
+      debugPrint('Loaded ${surahs.length} surahs');
       notifyListeners();
 
       if (!isFirstLaunch) {
@@ -78,10 +92,7 @@ class AppProvider extends ChangeNotifier {
       quranReady = true;
       quranFontLoaded = true;
 
-      if (isFirstLaunch) {
-        await _performInitialSetup();
-      }
-
+      // Try to load radios in background (non-blocking)
       try {
         radios = await radioService.fetchFeaturedRadios();
       } catch (_) {
@@ -89,19 +100,23 @@ class AppProvider extends ChangeNotifier {
       }
 
       if (isFirstLaunch) {
-        if (setupError == null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('first_run_complete', true);
-          this.isFirstLaunch = false;
-          showProgress = false;
-          isLoading = false;
-        }
+        // Mark first run as complete immediately
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('first_run_complete', true);
+        this.isFirstLaunch = false;
+        showProgress = false;
+        isLoading = false;
       } else {
         isLoading = false;
       }
+
       notifyListeners();
     } catch (e, stack) {
       debugPrint('Continue bootstrap error: $e\n$stack');
+      // Even if there's an error, allow the app to work
+      isLoading = false;
+      quranReady = true;
+      notifyListeners();
     }
   }
 
@@ -115,7 +130,8 @@ class AppProvider extends ChangeNotifier {
       await tafsirService.ensureOfflineData();
       setupProgress = 1;
     } catch (e) {
-      setupError = e.toString();
+      // Don't block the app if tafsir fails
+      setupError = null;
     }
   }
 
@@ -127,13 +143,13 @@ class AppProvider extends ChangeNotifier {
 
     await _performInitialSetup();
 
-    if (setupError == null && isFirstLaunch) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('first_run_complete', true);
-      isFirstLaunch = false;
-      showProgress = false;
-      isLoading = false;
-    }
+    // Always allow the app to proceed, even if setup fails
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('first_run_complete', true);
+    isFirstLaunch = false;
+    showProgress = false;
+    isLoading = false;
+    quranReady = true;
     notifyListeners();
   }
 
@@ -170,7 +186,14 @@ class AudioProvider extends ChangeNotifier {
   AudioProvider(this.app) {
     app.playerService.player.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
-        playNext();
+        final pos = app.playerService.player.position;
+        final dur = app.playerService.player.duration;
+        if (dur == null || (dur.inSeconds - pos.inSeconds).abs() < 5) {
+          playNext();
+        } else {
+          // Stream dropped prematurely, pause to allow user to retry or seek.
+          app.playerService.player.pause();
+        }
       }
     });
   }

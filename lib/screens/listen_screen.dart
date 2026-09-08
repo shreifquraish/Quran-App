@@ -7,18 +7,92 @@ import '../core/theme.dart';
 import '../models/surah.dart';
 import '../providers/app_provider.dart';
 
-class ListenScreen extends StatelessWidget {
+class ListenScreen extends StatefulWidget {
   const ListenScreen({super.key});
 
   @override
+  State<ListenScreen> createState() => _ListenScreenState();
+}
+
+class _ListenScreenState extends State<ListenScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<ReciterConfig> get _filteredReciters {
+    if (_searchQuery.isEmpty) {
+      return featuredReciters;
+    }
+    return featuredReciters
+        .where((reciter) =>
+            reciter.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-      itemCount: featuredReciters.length,
-      itemBuilder: (context, index) {
-        final reciter = featuredReciters[index];
-        return _ReciterCard(reciter: reciter, index: index);
-      },
+    final filteredReciters = _filteredReciters;
+    
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+            decoration: InputDecoration(
+              hintText: 'ابحث عن شيخ...',
+              hintStyle: TextStyle(color: Colors.grey[400]),
+              prefixIcon: const Icon(Icons.search, color: AppColors.accent),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: AppColors.accent),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                        });
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: AppColors.card.withOpacity(0.5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppColors.accent, width: 2),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+            itemCount: filteredReciters.length,
+            itemBuilder: (context, index) {
+              final reciter = filteredReciters[index];
+              final originalIndex = featuredReciters.indexOf(reciter);
+              return _ReciterCard(reciter: reciter, index: originalIndex);
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -112,6 +186,9 @@ class ReciterSurahsScreen extends StatefulWidget {
 }
 
 class _ReciterSurahsScreenState extends State<ReciterSurahsScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -121,11 +198,30 @@ class _ReciterSurahsScreenState extends State<ReciterSurahsScreen> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Surah> get _filteredSurahs {
+    final app = context.read<AppProvider>();
+    if (_searchQuery.isEmpty) {
+      return app.surahs;
+    }
+    return app.surahs
+        .where((surah) =>
+            surah.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            surah.id.toString().contains(_searchQuery))
+        .toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final app = context.watch<AppProvider>();
     final audio = context.watch<AudioProvider>();
     final dark = app.isDarkMode;
     final downloaded = audio.downloadCountFor(widget.reciter.id);
+    final filteredSurahs = _filteredSurahs;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -219,6 +315,47 @@ class _ReciterSurahsScreenState extends State<ReciterSurahsScreen> {
                     ],
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'ابحث عن سورة...',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      prefixIcon: const Icon(Icons.search, color: AppColors.accent),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, color: AppColors.accent),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchQuery = '';
+                                });
+                              },
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: AppColors.card.withOpacity(0.5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                      ),
+                    ),
+                  ),
+                ),
                 if (audio.bulkDownloading &&
                     audio.bulkReciter?.id == widget.reciter.id)
                   Padding(
@@ -234,9 +371,9 @@ class _ReciterSurahsScreenState extends State<ReciterSurahsScreen> {
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                    itemCount: app.surahs.length,
+                    itemCount: filteredSurahs.length,
                     itemBuilder: (context, index) {
-                      final surah = app.surahs[index];
+                      final surah = filteredSurahs[index];
                       return _AudioSurahTile(
                         reciter: widget.reciter,
                         surah: surah,

@@ -31,7 +31,7 @@ class MushafReaderScreenState extends State<MushafReaderScreen> {
   int _currentPage = 1;
   int? _markedPage;
   bool _ready = false;
-  List<HighlightVerse> _activeHighlights = [];
+  final List<HighlightVerse> _activeHighlights = [];
   Timer? _highlightTimer;
 
   @override
