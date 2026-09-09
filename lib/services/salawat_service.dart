@@ -19,11 +19,11 @@ class SalawatService {
 
   static const MethodChannel _nativeChannel =
       MethodChannel('com.alqurankareem/salawat');
-  
+
   // High-importance channel with custom sound "salawat.mp3"
   static const String _channelId = 'salawat_alarm_v5';
   static const String _channelName = 'الصلاة على النبي ﷺ (صوت)';
-    static const String _channelDesc =
+  static const String _channelDesc =
       'تذكير دوري صوتي دقيق: عند الدقيقة 00 تُقال عبارة الصلاة على محمد ﷺ، وعند الدقيقة 30 تُقال عبارة خاتم المرسلين';
 
   static const int _baseNotificationId = 3000;
@@ -31,10 +31,6 @@ class SalawatService {
 
   static const String salawatText = 'صَلِّ عَلَى مُحَمَّد ﷺ';
   static const String salawatAudioPath = 'assets/audio/صلي علي محمد.mp3';
-  // Additional phrase for :30
-  static const String salawatTextHalf = 'وَصَلِّ عَلَى خَاتَمِ الْمُرْسَلِينَ';
-  // You can add a separate audio file for the half-hour phrase if available
-  static const String salawatAudioPathHalf = 'assets/audio/لا اله الا الله.mp3';
 
   Timer? _clockTimer;
   Timer? _recurringForegroundTimer;
@@ -71,10 +67,14 @@ class SalawatService {
 
         // Delete previous channels to ensure fresh sound assignment
         try {
-          await androidImplementation.deleteNotificationChannel('salawat_channel');
-          await androidImplementation.deleteNotificationChannel('salawat_voice_channel');
-          await androidImplementation.deleteNotificationChannel('salawat_exact_alarm_v3');
-          await androidImplementation.deleteNotificationChannel('salawat_alarm_v5');
+          await androidImplementation
+              .deleteNotificationChannel('salawat_channel');
+          await androidImplementation
+              .deleteNotificationChannel('salawat_voice_channel');
+          await androidImplementation
+              .deleteNotificationChannel('salawat_exact_alarm_v3');
+          await androidImplementation
+              .deleteNotificationChannel('salawat_alarm_v5');
         } catch (_) {}
 
         await androidImplementation.createNotificationChannel(
@@ -124,10 +124,12 @@ class SalawatService {
 
     if (now.minute < 30) {
       nextMinute = 30;
-      nextTime = DateTime(now.year, now.month, now.day, now.hour, nextMinute, 0);
+      nextTime =
+          DateTime(now.year, now.month, now.day, now.hour, nextMinute, 0);
     } else {
       nextMinute = 0;
-      nextTime = DateTime(now.year, now.month, now.day, now.hour + 1, nextMinute, 0);
+      nextTime =
+          DateTime(now.year, now.month, now.day, now.hour + 1, nextMinute, 0);
     }
 
     final initialDelay = nextTime.difference(now);
@@ -162,17 +164,7 @@ class SalawatService {
       return;
     }
 
-    final minute = now.minute;
-    if (minute % 60 == 0) {
-      // minute == 00 -> play 'صلي على محمد'
-      await playVoice(assetPath: salawatAudioPath);
-    } else if (minute == 30) {
-      // minute == 30 -> play 'خاتم المر سلين'
-      await playVoice(assetPath: salawatAudioPathHalf);
-    } else {
-      // fallback: play primary
-      await playVoice(assetPath: salawatAudioPath);
-    }
+    await playVoice(assetPath: salawatAudioPath);
   }
 
   NotificationDetails _getNotificationDetails() {
@@ -209,6 +201,9 @@ class SalawatService {
   Future<void> playVoice({String? assetPath}) async {
     try {
       if (Platform.isAndroid) {
+        final canPlay =
+            await _nativeChannel.invokeMethod<bool>('canPlayAudio') ?? true;
+        if (!canPlay) return;
         await _nativeChannel.invokeMethod('setMaxVolume');
       }
       final path = assetPath ?? salawatAudioPath;
@@ -222,7 +217,6 @@ class SalawatService {
 
   Future<void> showTestNotification() async {
     await playVoice(assetPath: salawatAudioPath);
-    await playVoice(assetPath: salawatAudioPathHalf);
   }
 
   Future<void> showTestNotificationInternal({bool half = false}) async {
@@ -238,11 +232,7 @@ class SalawatService {
     }
 
     // Fallback: play appropriate phrase locally
-    if (half) {
-      await playVoice(assetPath: salawatAudioPathHalf);
-    } else {
-      await _playNextSequentialThikr();
-    }
+    await _playNextSequentialThikr();
   }
 
   /// Schedules exact alarms at :00 and :30 of every hour
@@ -286,8 +276,7 @@ class SalawatService {
         }
 
         final tzDateTime = tz.TZDateTime.from(scheduledDate, tz.local);
-        // minute == 0 -> play salawatText (صلي على محمد)
-        final body = (minute == 0) ? salawatText : salawatTextHalf;
+        const body = salawatText;
 
         try {
           await _notifications.zonedSchedule(
@@ -302,7 +291,8 @@ class SalawatService {
             matchDateTimeComponents: DateTimeComponents.time,
           );
         } catch (e) {
-          debugPrint('Error scheduling exact salawat slot $slotIndex ($hour:$minute): $e');
+          debugPrint(
+              'Error scheduling exact salawat slot $slotIndex ($hour:$minute): $e');
         }
 
         slotIndex++;
