@@ -7,11 +7,15 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.database.ContentObserver
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -25,6 +29,18 @@ class SalawatAlarmReceiver : BroadcastReceiver() {
         const val CHANNEL_ID = "salawat_alarm_native_channel_v6"
         const val CHANNEL_NAME = "الصلاة على النبي ﷺ (صوت)"
         const val NOTIFICATION_ID = 7777
+        private var activePlayer: MediaPlayer? = null
+        private var activeWakeLock: PowerManager.WakeLock? = null
+        private var volumeObserver: ContentObserver? = null
+
+        /** Returns true if Salawat audio is currently playing */
+        fun isPlaying(): Boolean {
+            return try {
+                activePlayer?.isPlaying == true
+            } catch (_: Exception) {
+                false
+            }
+        }
 
         fun setMaxVolume(context: Context) {
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
@@ -33,6 +49,48 @@ class SalawatAlarmReceiver : BroadcastReceiver() {
             audioManager.setStreamVolume(AudioManager.STREAM_ALARM, maxAlarm, 0)
             val maxMusic = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxMusic, 0)
+            val maxNotification = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
+            audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, maxNotification, 0)
+            val maxRing = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING)
+            audioManager.setStreamVolume(AudioManager.STREAM_RING, maxRing, 0)
+        }
+
+        fun isAnotherAudioActive(context: Context): Boolean {
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+                ?: return false
+            return audioManager.isMusicActive ||
+                audioManager.mode == AudioManager.MODE_IN_CALL ||
+                audioManager.mode == AudioManager.MODE_IN_COMMUNICATION
+        }
+
+        fun stopPlayback(context: Context) {
+            volumeObserver?.let { context.contentResolver.unregisterContentObserver(it) }
+            volumeObserver = null
+            activePlayer?.let {
+                try { it.stop() } catch (_: Exception) {}
+                it.release()
+            }
+            activePlayer = null
+            activeWakeLock?.let { if (it.isHeld) it.release() }
+            activeWakeLock = null
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            notificationManager?.cancel(NOTIFICATION_ID)
+            // Also stop foreground service if running
+            SalawatService.stop(context)
+        }
+
+        private fun observeVolumeButtons(context: Context) {
+            volumeObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+                override fun onChange(selfChange: Boolean) {
+                    stopPlayback(context)
+                }
+            }
+            context.contentResolver.registerContentObserver(
+                Settings.System.CONTENT_URI,
+                true,
+                volumeObserver!!,
+            )
         }
 
         /**
@@ -141,34 +199,10 @@ class SalawatAlarmReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-
-        // 1. Acquire partial wake lock to keep CPU awake while voice plays
-        val wakeLock = powerManager?.newWakeLock(
-            PowerManager.PARTIAL_WAKE_LOCK,
-            "AlQuranKareem::SalawatCpuWakeLock"
-        )
-        wakeLock?.acquire(10000) // 10 seconds max safety timeout
-
-        try {
-            if (!isPrayerTimeNow(context)) {
-                val isHalfHour = Calendar.getInstance().get(Calendar.MINUTE) == 30
-                val audioName = if (isHalfHour) "salawat_khatam" else "salawat"
-                val phrase = if (isHalfHour) {
-                    "لَا إِلَهَ إِلَّا اللَّهُ - يُشغّل الآن"
-                } else {
-                    "صَلِّ عَلَى مُحَمَّد ﷺ - يُشغّل الآن"
-                }
-                showNotification(context, phrase)
-                playSalawatVoice(context, wakeLock, audioName)
-            } else if (wakeLock?.isHeld == true) {
-                wakeLock.release()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            if (wakeLock?.isHeld == true) wakeLock.release()
+        if (!isPrayerTimeNow(context)) {
+            showNotification(context, "صَلِّ عَلَى مُحَمَّد ﷺ - يُشغّل الآن")
+            SalawatService.start(context, "salawat")
         }
-
         // Reschedule for next clock interval (:00 or :30)
         scheduleNextAlarm(context)
     }
@@ -193,6 +227,8 @@ class SalawatAlarmReceiver : BroadcastReceiver() {
                 if (wakeLock?.isHeld == true) wakeLock.release()
                 return
             }
+            activePlayer = mediaPlayer
+            activeWakeLock = wakeLock
 
             // Bind wake lock to MediaPlayer so Android does not sleep during playback
             mediaPlayer.setWakeMode(context.applicationContext, PowerManager.PARTIAL_WAKE_LOCK)
@@ -205,12 +241,16 @@ class SalawatAlarmReceiver : BroadcastReceiver() {
             mediaPlayer.setVolume(1.0f, 1.0f)
 
             mediaPlayer.setOnCompletionListener { mp ->
+                volumeObserver?.let { context.contentResolver.unregisterContentObserver(it) }
+                volumeObserver = null
                 try {
                     mp.stop()
                     mp.release()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
+                activePlayer = null
+                activeWakeLock = null
                 cancelNotification(context)
                 if (wakeLock?.isHeld == true) {
                     wakeLock.release()
@@ -218,9 +258,13 @@ class SalawatAlarmReceiver : BroadcastReceiver() {
             }
 
             mediaPlayer.setOnErrorListener { mp, _, _ ->
+                volumeObserver?.let { context.contentResolver.unregisterContentObserver(it) }
+                volumeObserver = null
                 try {
                     mp.release()
                 } catch (e: Exception) {}
+                activePlayer = null
+                activeWakeLock = null
                 cancelNotification(context)
                 if (wakeLock?.isHeld == true) {
                     wakeLock.release()
@@ -228,6 +272,7 @@ class SalawatAlarmReceiver : BroadcastReceiver() {
                 true
             }
 
+            observeVolumeButtons(context)
             mediaPlayer.start()
         } catch (e: Exception) {
             e.printStackTrace()

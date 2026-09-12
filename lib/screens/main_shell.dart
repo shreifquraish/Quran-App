@@ -31,9 +31,8 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       UpdateService.checkForUpdates(context);
-      // Removed microphone permission prompt as requested
     });
   }
 

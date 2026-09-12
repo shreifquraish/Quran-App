@@ -12,25 +12,19 @@ class UpdateService {
   //   "version": "1.0.1",
   //   "url": "https://www.mediafire.com/file/pvjih40arlls1ro/%25D8%25A7%25D9%2584%25D9%2582%25D8%25B1%25D8%25A3%25D9%2586_%25D8%25A7%25D9%2584%25D9%2583%25D8%25B1%25D9%258A%25D9%2585.apk/file"
   // }
-  static const String _versionUrl = 'https://gist.githubusercontent.com/shreifquraish/458045c14f68fd1af109f4cfeef024ee/raw/version.json';
+  static const String _versionUrl = AppConstants.updateManifestUrl;
   
   static Future<void> checkForUpdates(BuildContext context) async {
     try {
       final response = await http.get(Uri.parse(_versionUrl)).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
+        if (!context.mounted) return;
         final data = jsonDecode(response.body);
-        final remoteVersion = data['version'] as String;
-        final downloadUrl = data['url'] as String;
-        
-        // Check if current version is less than 1.1.0 - show special message to reinstall
-        if (_isOlderThan(AppConstants.appVersion, '1.1.0')) {
-          _showReinstallDialog(context, remoteVersion, downloadUrl);
-          return;
-        }
-        
-        // Simple version check (assuming format x.y.z)
-        // If your app version in pubspec is 1.0.0, you can compare it.
-        // For simplicity, we compare it against a hardcoded constant in AppConstants.
+        final remoteVersion = data['version'] as String?;
+        final downloadUrl = data['url'] as String?;
+        if (remoteVersion == null || downloadUrl == null) return;
+        if (!context.mounted) return;
+
         if (_isNewer(remoteVersion, AppConstants.appVersion)) {
           _showUpdateDialog(context, remoteVersion, downloadUrl);
         }
@@ -41,8 +35,18 @@ class UpdateService {
   }
 
   static bool _isNewer(String remote, String local) {
-    final rParts = remote.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    final lParts = local.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    List<int> parts(String value) {
+      final numbers = value.trim().split('+').first.split('.').map(int.tryParse).toList();
+      if (numbers.any((part) => part == null)) return const [0, 0, 0];
+      return [
+        numbers.isNotEmpty ? numbers[0]! : 0,
+        numbers.length > 1 ? numbers[1]! : 0,
+        numbers.length > 2 ? numbers[2]! : 0,
+      ];
+    }
+
+    final rParts = parts(remote);
+    final lParts = parts(local);
     
     for (int i = 0; i < 3; i++) {
       final r = i < rParts.length ? rParts[i] : 0;

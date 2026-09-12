@@ -7,13 +7,23 @@ import 'core/theme.dart';
 import 'providers/app_provider.dart';
 import 'screens/main_shell.dart';
 import 'services/permission_service.dart';
+import 'services/notification_service.dart';
+import 'services/update_worker_service.dart';
 import 'services/salawat_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Initialize services
   final permissionService = PermissionService();
   permissionService.initialize();
-  await SalawatService.instance.initialize();
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+
+  // Fire-and-forget: don't block app startup on network calls
+  notificationService.checkForUpdate().ignore();
+  SalawatService.instance.initialize().ignore();
+  registerUpdateCheckWorker().ignore();
+
   runApp(const QuranApp());
 }
 

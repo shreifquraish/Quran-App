@@ -1,18 +1,38 @@
 package com.alqurankareem.al_quran_kareem
 
 import android.content.Intent
+import android.view.KeyEvent
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity: FlutterActivity() {
     private val SALAWAT_CHANNEL = "com.alqurankareem/salawat"
+    private var salawatChannel: MethodChannel? = null
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val isVolumeKey = event.keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
+            event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+            event.keyCode == KeyEvent.KEYCODE_VOLUME_MUTE
+        if (isVolumeKey && event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+            // Stop only the audio that is currently playing
+            if (SalawatAlarmReceiver.isPlaying()) {
+                SalawatAlarmReceiver.stopPlayback(applicationContext)
+            }
+            if (AdhanAlarmReceiver.isPlaying()) {
+                AdhanAlarmReceiver.stopPlayback(applicationContext)
+            }
+            salawatChannel?.invokeMethod("volumeKeyPressed", null)
+        }
+        return super.dispatchKeyEvent(event)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
         // 1. Salawat Native Channel
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SALAWAT_CHANNEL).setMethodCallHandler { call, result ->
+        salawatChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SALAWAT_CHANNEL)
+        salawatChannel?.setMethodCallHandler { call, result ->
             when (call.method) {
                 "scheduleSalawat" -> {
                     SalawatAlarmReceiver.scheduleNextAlarm(applicationContext)
@@ -31,6 +51,9 @@ class MainActivity: FlutterActivity() {
                     SalawatAlarmReceiver.setMaxVolume(applicationContext)
                     result.success(true)
                 }
+                "canPlayAudio" -> {
+                    result.success(!SalawatAlarmReceiver.isAnotherAudioActive(applicationContext))
+                }
                 else -> result.notImplemented()
             }
         }
@@ -41,11 +64,11 @@ class MainActivity: FlutterActivity() {
                     val id = call.argument<Int>("id") ?: return@setMethodCallHandler result.error("INVALID_ID", "Missing alarm id", null)
                     val timestamp = call.argument<Number>("timestamp")?.toLong()
                         ?: return@setMethodCallHandler result.error("INVALID_TIME", "Missing alarm timestamp", null)
-                    AdhanAlarmReceiver.schedule(applicationContext, id, timestamp)
+                    AdhanAlarmReceiver().schedule(applicationContext, id, timestamp)
                     result.success(true)
                 }
                 "cancelAdhan" -> {
-                    AdhanAlarmReceiver.cancelAll(applicationContext)
+                    AdhanAlarmReceiver().cancelAll(applicationContext)
                     result.success(true)
                 }
                 "testAdhan" -> {
@@ -65,4 +88,6 @@ class MainActivity: FlutterActivity() {
     override fun onDestroy() {
         super.onDestroy()
     }
+
 }
+

@@ -83,6 +83,13 @@ class AppProvider extends ChangeNotifier {
       surahs = (jsonDecode(raw) as List<dynamic>).map((x) => Surah.fromJson(x)).toList();
       debugPrint('Loaded ${surahs.length} surahs');
       notifyListeners();
+      try {
+        await _performInitialSetup();
+        setupMessage = 'جاري تجهيز التطبيق...';
+        notifyListeners();
+      } catch (e) {
+        debugPrint('Tafsir setup failed (non-critical): $e');
+      }
 
       if (!isFirstLaunch) {
         await Future.delayed(const Duration(milliseconds: 800));

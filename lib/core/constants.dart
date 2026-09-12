@@ -1,6 +1,8 @@
 class AppConstants {
   static const appName = 'القرآن الكريم';
-  static const appVersion = '1.1.2';
+  static const appVersion = '1.1.3+7';
+  static const updateManifestUrl =
+      'https://gist.githubusercontent.com/shreifquraish/4580454c14f68df1a109f4eef024ee/raw/version.json';
   static const quranpediaBase = 'https://api.quranpedia.net/v1';
   static const mp3QuranBase = 'https://mp3quran.net/api/v3';
   static const mushafId = 2;

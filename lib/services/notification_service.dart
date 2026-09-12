@@ -1,7 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:convert';
+import '../core/constants.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -23,7 +28,7 @@ class NotificationService {
     tz.setLocalLocation(tz.getLocation('Africa/Cairo'));
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/launcher_icon');
 
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings();
@@ -38,14 +43,20 @@ class NotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
+    await _notifications.cancel(5001);
 
     await requestPermissions();
 
     _initialized = true;
   }
 
-  void _onNotificationTap(NotificationResponse response) {
-    // Handle notification tap if needed
+  Future<void> _onNotificationTap(NotificationResponse response) async {
+    if (response.id == 5002 && response.payload != null) {
+      await launchUrl(
+        Uri.parse(response.payload!),
+        mode: LaunchMode.externalApplication,
+      );
+    }
   }
 
   Future<bool> requestPermissions() async {
@@ -68,6 +79,116 @@ class NotificationService {
       return granted ?? false;
     }
     return true;
+  }
+
+  Future<void> checkForUpdate() async {
+    try {
+      final response = await http
+          .get(Uri.parse(AppConstants.updateManifestUrl))
+          .timeout(const Duration(seconds: 8));
+      if (response.statusCode != 200) return;
+
+      final manifest = jsonDecode(response.body) as Map<String, dynamic>;
+      final remoteVersion = manifest['version'] as String?;
+      final downloadUrl = manifest['url'] as String?;
+      if (remoteVersion == null || downloadUrl == null ||
+          !_isNewerVersion(remoteVersion, AppConstants.appVersion)) {
+        return;
+      }
+
+      const details = NotificationDetails(
+        android: AndroidNotificationDetails(
+          'app_updates',
+          'تحديثات التطبيق',
+          channelDescription: 'إشعارات إصدارات التطبيق الجديدة',
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: true,
+        ),
+      );
+      await _notifications.show(
+        5002,
+        'يتوفر تحديث جديد',
+        'الإصدار $remoteVersion متاح الآن، اضغط للتحميل',
+        details,
+        payload: downloadUrl,
+      );
+    } catch (_) {
+      // Update checks are optional and must never affect offline startup.
+    }
+  }
+
+  /// Shows a notification about a new version (called from background worker).
+  /// `version` is the remote version string, `downloadUrl` is an optional URL to open when the user taps the notification.
+  Future<void> showUpdateNotification(String version, String? downloadUrl) async {
+    const androidDetails = AndroidNotificationDetails(
+      'app_updates',
+      'تحديثات التطبيق',
+      channelDescription: 'إشعارات إصدارات التطبيق الجديدة',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+    );
+    const details = NotificationDetails(android: androidDetails);
+    await _notifications.show(
+      5002,
+      'يتوفر تحديث جديد',
+      'الإصدار $version متاح الآن، اضغط للتحميل',
+      details,
+      payload: downloadUrl,
+    );
+  }
+
+  bool _isNewerVersion(String remote, String current) {
+    List<int> parts(String value) {
+      final version = value.trim().split('+').first;
+      final numbers = version.split('.').map(int.tryParse).toList();
+      if (numbers.any((part) => part == null)) return const [0, 0, 0];
+      return [
+        numbers.isNotEmpty ? numbers[0]! : 0,
+        numbers.length > 1 ? numbers[1]! : 0,
+        numbers.length > 2 ? numbers[2]! : 0,
+      ];
+    }
+
+    final remoteParts = parts(remote);
+    final currentParts = parts(current);
+    for (var index = 0; index < 3; index++) {
+      final remotePart = index < remoteParts.length ? remoteParts[index] : 0;
+      final currentPart = index < currentParts.length ? currentParts[index] : 0;
+      if (remotePart != currentPart) return remotePart > currentPart;
+    }
+    return false;
+  }
+
+  Future<void> showUpdateNotificationIfNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    const lastVersionKey = 'last_notified_app_version';
+    final lastVersion = prefs.getString(lastVersionKey);
+
+    if (lastVersion == null) {
+      await prefs.setString(lastVersionKey, AppConstants.appVersion);
+      return;
+    }
+    if (lastVersion == AppConstants.appVersion) return;
+
+    const androidDetails = AndroidNotificationDetails(
+      'app_updates',
+      'تحديثات التطبيق',
+      channelDescription: 'إشعارات إصدارات التطبيق الجديدة',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+    );
+    const details = NotificationDetails(android: androidDetails);
+
+    await _notifications.show(
+      5001,
+      'تم تحديث التطبيق',
+      'تم تثبيت الإصدار ${AppConstants.appVersion} بنجاح',
+      details,
+    );
+    await prefs.setString(lastVersionKey, AppConstants.appVersion);
   }
 
   Future<void> showTestNotification() async {

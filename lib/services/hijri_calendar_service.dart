@@ -5,13 +5,14 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+
 class HijriDate {
   final int year;
   final int month;
   final int day;
   final String monthName;
 
-  HijriDate({
+  const HijriDate({
     required this.year,
     required this.month,
     required this.day,
@@ -20,85 +21,76 @@ class HijriDate {
 
   String get formatted => '$day $monthName $year هـ';
 
-  factory HijriDate.now() {
-    // Reference date: July 20, 2026 = 6 Safar 1448
-    final referenceGregorian = DateTime(2026, 7, 20);
-    const referenceHijriDay = 6;
-    const referenceHijriMonth = 2; // Safar
-    const referenceHijriYear = 1448;
-    
-    final now = DateTime.now();
-    final daysDifference = now.difference(referenceGregorian).inDays;
-    
-    // Calculate the Hijri date based on the reference
-    // Average Hijri month length: 29.5 days
-    final totalDaysFromReference = daysDifference;
-    final monthDifference = (totalDaysFromReference / 29.5).floor();
-    final dayDifference = totalDaysFromReference % 29.5;
-    
-    var newDay = referenceHijriDay + dayDifference.floor();
-    var newMonth = referenceHijriMonth + monthDifference;
-    var newYear = referenceHijriYear;
-    
-    // Adjust for month overflow
-    while (newDay > 30) {
-      newDay -= 30;
-      newMonth++;
-    }
-    while (newDay < 1) {
-      newDay += 29;
-      newMonth--;
-    }
-    
-    // Adjust for year overflow
-    while (newMonth > 12) {
-      newMonth -= 12;
-      newYear++;
-    }
-    while (newMonth < 1) {
-      newMonth += 12;
-      newYear--;
-    }
-    
+  factory HijriDate.now() => HijriDate.fromGregorian(DateTime.now());
+
+  factory HijriDate.fromGregorian(DateTime date) {
+    // Julian Day Number
+    int y = date.year, m = date.month, d = date.day;
+    if (m <= 2) { y -= 1; m += 12; }
+    final a = (y / 100).floor();
+    final b = 2 - a + (a / 4).floor();
+    final jd = (365.25 * (y + 4716)).floor() +
+               (30.6001 * (m + 1)).floor() +
+               d + b - 1524;
+
+    // Julian → Hijri
+    var l = jd - 1948440 + 10632;
+    final n = ((l - 1) / 10631).floor();
+    l = l - 10631 * n + 354;
+    final j = ((10985 - l) / 5316).floor() * ((50 * l) / 17719).floor() +
+              (l / 5670).floor() * ((43 * l) / 15238).floor();
+    l = l - ((30 - j) / 15).floor() * ((17719 * j) / 50).floor() -
+        (j / 16).floor() * ((15238 * j) / 43).floor() + 29;
+    final hMonth = ((24 * l) / 709).floor();
+    final hDay = l - ((709 * hMonth) / 24).floor();
+    final hYear = 30 * n + j - 30;
+
     return HijriDate(
-      year: newYear,
-      month: newMonth.clamp(1, 12),
-      day: newDay.clamp(1, 30),
-      monthName: _getHijriMonthName(newMonth.clamp(1, 12)),
+      year: hYear,
+      month: hMonth,
+      day: hDay,
+      monthName: _getHijriMonthName(hMonth),
     );
   }
 
-  static double _gregorianToJulian(int year, int month, int day) {
-    if (month <= 2) {
-      year -= 1;
-      month += 12;
-    }
-    final a = (year / 100).floor();
-    final b = 2 - a + (a / 4).floor();
-    return (365.25 * (year + 4716)).floor() +
-           (30.6001 * (month + 1)).floor() +
-           day +
-           b - 1524.5;
+  DateTime toGregorian() {
+    // Hijri → Julian Day Number
+    final jd = ((11 * year + 3) / 30).floor() +
+               354 * year +
+               30 * month -
+               ((month - 1) / 2).floor() +
+               day +
+               1948440 -
+               385;
+
+    // Julian → Gregorian
+    var l = jd + 68569;
+    final n = ((4 * l) / 146097).floor();
+    l = l - ((146097 * n + 3) / 4).floor();
+    final i = ((4000 * (l + 1)) / 1461001).floor();
+    l = l - ((1461 * i) / 4).floor() + 31;
+    final j = ((80 * l) / 2447).floor();
+    final gDay = l - ((2447 * j) / 80).floor();
+    l = (j / 11).floor();
+    final gMonth = j + 2 - 12 * l;
+    final gYear = 100 * (n - 49) + i + l;
+
+    return DateTime(gYear, gMonth, gDay);
   }
 
   static String _getHijriMonthName(int month) {
     const months = [
-      'محرم',
-      'صفر',
-      'ربيع الأول',
-      'ربيع الآخر',
-      'جمادى الأولى',
-      'جمادى الآخرة',
-      'رجب',
-      'شعبان',
-      'رمضان',
-      'شوال',
-      'ذو القعدة',
-      'ذو الحجة',
+      'محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر',
+      'جمادى الأولى', 'جمادى الآخرة', 'رجب', 'شعبان',
+      'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة',
     ];
-    return months[(month - 1) % 12];
+    return months[(month - 1).clamp(0, 11)];
   }
 }
+
+
+
+
 
 class HijriEvent {
   const HijriEvent({
@@ -117,15 +109,18 @@ class HijriEvent {
   final int day;
   final int notificationDaysBefore;
 
-  bool isToday(HijriDate today) {
-    return today.month == month && today.day == day;
-  }
+  bool isToday(HijriDate today) => today.month == month && today.day == day;
 
   bool isUpcoming(HijriDate today, int daysBefore) {
-    final eventDate = DateTime(today.year, month, day);
-    final todayDate = DateTime(today.year, today.month, today.day);
-    final difference = eventDate.difference(todayDate).inDays;
-    return difference >= 0 && difference <= daysBefore;
+    var targetYear = today.year;
+    if (month < today.month || (month == today.month && day < today.day)) {
+      targetYear += 1;
+    }
+    final eventGregorian = HijriDate(year: targetYear, month: month, day: day, monthName: '').toGregorian();
+    final now = DateTime.now();
+    final todayGregorian = DateTime(now.year, now.month, now.day);
+    final diff = eventGregorian.difference(todayGregorian).inDays;
+    return diff >= 0 && diff <= daysBefore;
   }
 }
 
@@ -239,27 +234,21 @@ class HijriCalendarService {
 
   Future<void> _scheduleEventNotifications() async {
     if (!_notificationsEnabled) return;
-
     final today = currentDate;
-    
     for (final event in importantEvents) {
       final daysUntil = _daysUntilEvent(event, today);
-      
-      // Schedule notification 1 day before the event
       if (daysUntil == 1) {
-        final alreadyNotified = await wasEventNotified('${event.id}_before');
+        final alreadyNotified = await wasEventNotified('\${event.id}_before');
         if (!alreadyNotified) {
           await _scheduleNotification(
             event,
-            'غداً: ${event.name}',
+            'غداً: \${event.name}',
             event.description,
             DateTime.now().add(const Duration(hours: 24)),
           );
-          await markEventAsNotified('${event.id}_before');
+          await markEventAsNotified('\${event.id}_before');
         }
       }
-      
-      // Schedule notification on the event day
       if (daysUntil == 0) {
         final alreadyNotified = await wasEventNotified(event.id);
         if (!alreadyNotified) {
@@ -336,34 +325,30 @@ class HijriCalendarService {
   List<HijriEvent> getUpcomingEvents({int daysAhead = 30}) {
     final today = currentDate;
     final upcoming = <HijriEvent>[];
-
     for (final event in importantEvents) {
       if (event.isUpcoming(today, daysAhead)) {
         upcoming.add(event);
       }
     }
-
-    upcoming.sort((a, b) {
-      final aDays = _daysUntilEvent(a, today);
-      final bDays = _daysUntilEvent(b, today);
-      return aDays.compareTo(bDays);
-    });
-
+    upcoming.sort((a, b) => _daysUntilEvent(a, today).compareTo(_daysUntilEvent(b, today)));
     return upcoming;
   }
 
-  int _daysUntilEvent(HijriEvent event, HijriDate today) {
-    final eventDate = DateTime(today.year, event.month, event.day);
-    final todayDate = DateTime(today.year, today.month, today.day);
-    return eventDate.difference(todayDate).inDays;
-  }
+    int _daysUntilEvent(HijriEvent event, HijriDate today) {
+      var targetYear = today.year;
+      if (event.month < today.month || (event.month == today.month && event.day < today.day)) {
+        targetYear += 1;
+      }
+      final gregorianTarget = HijriDate(year: targetYear, month: event.month, day: event.day, monthName: '').toGregorian();
+      final now = DateTime.now();
+final todayGregorian = DateTime(now.year, now.month, now.day);
+      return gregorianTarget.difference(todayGregorian).inDays;
+    }
 
   HijriEvent? getTodayEvent() {
     final today = currentDate;
     for (final event in importantEvents) {
-      if (event.isToday(today)) {
-        return event;
-      }
+      if (event.isToday(today)) return event;
     }
     return null;
   }
@@ -372,7 +357,6 @@ class HijriCalendarService {
     final prefs = await SharedPreferences.getInstance();
     final historyJson = prefs.getString(_eventsKey) ?? '[]';
     final history = jsonDecode(historyJson) as List<dynamic>;
-    
     final today = currentDate.formatted;
     if (!history.any((e) => e['event_id'] == eventId && e['date'] == today)) {
       history.add({
@@ -388,7 +372,6 @@ class HijriCalendarService {
     final prefs = await SharedPreferences.getInstance();
     final historyJson = prefs.getString(_eventsKey) ?? '[]';
     final history = jsonDecode(historyJson) as List<dynamic>;
-    
     final today = currentDate.formatted;
     return history.any((e) => e['event_id'] == eventId && e['date'] == today);
   }

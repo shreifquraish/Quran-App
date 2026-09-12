@@ -57,6 +57,12 @@ class SalawatService {
 
     await _notifications.initialize(settings);
 
+    _nativeChannel.setMethodCallHandler((call) async {
+      if (call.method == 'volumeKeyPressed') {
+        await _voicePlayer.stop();
+      }
+    });
+
     // Create Android notification channel with max priority and alarm attributes
     if (Platform.isAndroid) {
       final androidImplementation =
@@ -73,8 +79,7 @@ class SalawatService {
               .deleteNotificationChannel('salawat_voice_channel');
           await androidImplementation
               .deleteNotificationChannel('salawat_exact_alarm_v3');
-          await androidImplementation
-              .deleteNotificationChannel('salawat_alarm_v5');
+          // Note: do NOT delete the current channel 'salawat_alarm_v5'
         } catch (_) {}
 
         await androidImplementation.createNotificationChannel(
@@ -249,9 +254,7 @@ class SalawatService {
         debugPrint('Native scheduleSalawat error: $e');
       }
 
-      // Android uses the native alarm receiver so it can skip prayer minutes
-      // even when the Flutter engine is not running.
-      _startClockAlignedForegroundTimer();
+      // Android uses the native AlarmManager — no Flutter timer needed
       return;
     }
 
