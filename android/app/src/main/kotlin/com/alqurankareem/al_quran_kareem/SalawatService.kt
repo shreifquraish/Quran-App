@@ -47,6 +47,14 @@ class SalawatService : Service() {
 
     private var mediaPlayer: MediaPlayer? = null
     private var wakeLock: PowerManager.WakeLock? = null
+    private var audioManager: AudioManager? = null
+    private var audioFocusRequest: android.media.AudioFocusRequest? = null
+    private val audioFocusListener = AudioManager.OnAudioFocusChangeListener { change ->
+        if (change == AudioManager.AUDIOFOCUS_LOSS ||
+            change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+            stopSelf()
+        }
+    }
 // private var volumeObserver: ContentObserver? = null  // Removed – not needed
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -66,6 +74,11 @@ class SalawatService : Service() {
 
     private fun playSalawat(audioResName: String) {
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        this.audioManager = audioManager
+        if (!requestAudioFocus(audioManager)) {
+            stopSelf()
+            return
+        }
         audioManager.setStreamVolume(AudioManager.STREAM_ALARM,        audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM),        0)
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,        audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),        0)
         audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION), 0)
@@ -108,9 +121,37 @@ class SalawatService : Service() {
 // volumeObserver removed – no cleanup needed
         mediaPlayer?.let { try { it.stop() } catch (_: Exception) {}; it.release() }
         mediaPlayer = null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest?.let { audioManager?.abandonAudioFocusRequest(it) }
+            audioFocusRequest = null
+        } else {
+            audioManager?.abandonAudioFocus(audioFocusListener)
+        }
+        audioManager = null
         wakeLock?.let { if (it.isHeld) it.release() }
         wakeLock = null
         (getSystemService(NOTIFICATION_SERVICE) as? NotificationManager)?.cancel(NOTIFICATION_ID)
+    }
+
+    private fun requestAudioFocus(manager: AudioManager): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val request = android.media.AudioFocusRequest.Builder(
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT,
+            ).setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build(),
+            ).setOnAudioFocusChangeListener(audioFocusListener).build()
+            audioFocusRequest = request
+            return manager.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        }
+        @Suppress("DEPRECATION")
+        return manager.requestAudioFocus(
+            audioFocusListener,
+            AudioManager.STREAM_ALARM,
+            AudioManager.AUDIOFOCUS_GAIN_TRANSIENT,
+        ) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
     }
 
     private fun createNotificationChannel() {

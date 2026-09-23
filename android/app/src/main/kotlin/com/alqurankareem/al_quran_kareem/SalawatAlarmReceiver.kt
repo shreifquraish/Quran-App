@@ -199,6 +199,10 @@ class SalawatAlarmReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        if (isAnotherAudioActive(context)) {
+            scheduleNextAlarm(context)
+            return
+        }
         if (!isPrayerTimeNow(context)) {
             showNotification(context, "صَلِّ عَلَى مُحَمَّد ﷺ - يُشغّل الآن")
             SalawatService.start(context, "salawat")

@@ -125,7 +125,7 @@ const featuredReciters = [
   ),
   ReciterConfig(
     id: 121,
-    name: 'محمد علي البنا',
+    name: 'محمود علي البنا',
     serverUrl: 'https://server8.mp3quran.net/bna/',
   ),
   ReciterConfig(

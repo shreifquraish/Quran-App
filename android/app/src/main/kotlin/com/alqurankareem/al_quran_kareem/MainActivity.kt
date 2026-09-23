@@ -1,6 +1,8 @@
 package com.alqurankareem.al_quran_kareem
 
 import android.content.Intent
+import android.content.Context
+import android.media.AudioManager
 import android.view.KeyEvent
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -72,10 +74,20 @@ class MainActivity: FlutterActivity() {
                     result.success(true)
                 }
                 "testAdhan" -> {
+                    if (isAnotherAudioActive()) {
+                        return@setMethodCallHandler result.success(false)
+                    }
                     AdhanAlarmReceiver().onReceive(
                         applicationContext,
                         Intent("com.alqurankareem.ACTION_ADHAN_TEST"),
                     )
+                    result.success(true)
+                }
+                "canPlayAudio" -> {
+                    result.success(!isAnotherAudioActive())
+                }
+                "stopAdhan" -> {
+                    AdhanAlarmReceiver.stopPlayback(applicationContext)
                     result.success(true)
                 }
                 else -> result.notImplemented()
@@ -87,6 +99,17 @@ class MainActivity: FlutterActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+    }
+
+    private fun isAnotherAudioActive(): Boolean {
+        return try {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audioManager.isMusicActive ||
+                audioManager.mode == AudioManager.MODE_IN_CALL ||
+                audioManager.mode == AudioManager.MODE_IN_COMMUNICATION
+        } catch (_: Exception) {
+            false
+        }
     }
 
 }

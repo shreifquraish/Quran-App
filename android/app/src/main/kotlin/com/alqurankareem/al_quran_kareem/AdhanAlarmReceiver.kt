@@ -19,10 +19,22 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        if (isAnotherAudioActive(context)) return
         // Stop any salawat that might be playing to avoid audio overlap
         SalawatAlarmReceiver.stopPlayback(context)
         // Start the foreground service which handles audio independently
         AdhanService.start(context)
+    }
+
+    private fun isAnotherAudioActive(context: Context): Boolean {
+        return try {
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+            audioManager.isMusicActive ||
+                audioManager.mode == android.media.AudioManager.MODE_IN_CALL ||
+                audioManager.mode == android.media.AudioManager.MODE_IN_COMMUNICATION
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private val alarmAction = "com.alqurankareem.ACTION_ADHAN_ALARM"
